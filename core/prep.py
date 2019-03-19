@@ -95,6 +95,35 @@ def splitReadFile(readFile,filePrefixOut,readSide,numBatchesMax,deleteLocalFiles
      
     # done
     return numReads, numBatches  
+
+#-------------------------------------------------------------------------------------
+def runReadTrimmer(cfg):
+    ''' Use paired-end read trimmer for Illumina sequencing
+    '''
+    cmd = "PYTHONPATH= python3 {trimmer} " \
+          "--r1 {R1} --r2 {R2} --primer-file {primer} " \
+          "--out-metrics {summary} --out-r1 {outR1} --out-r2 {outR2} " \
+          "--check-primer-side --primer3-bases-R1 {primer3R1} " \
+          "--primer3-bases-R2 {primer3R2} --ncpu {ncpu} --primer-col 3 " \
+          "--seqtype dna --umi-len 12 --common-seq-len 11 " \
+          "--min-primer-side-len 25 --min-umi-side-len 1 --tagname-primer {pr} " \
+          "--tagname-primer-error {pe} --tagname-umi {mi} "
+    if cfg.duplex.lower() == "true":
+        cmd = cmd + "--tagname-duplex {du} --is-duplex --is-phased-adapters ".format(du = cfg.tagNameDuplex)
+    cmd = cmd + "> {log} 2>&1"
+    
+    cmd = cmd.format(
+        trimmer = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))),'read-trimmer/trimmer/run.py'),
+        R1 = cfg.readFile1, R2 = cfg.readFile2, primer = cfg.primerFile,
+        summary = cfg.readSet + '.prep.summary.txt',
+        outR1 = cfg.readSet + '.prep.R1.fastq',
+        outR2 = cfg.readSet + '.prep.R2.fastq',
+        primer3R1 = cfg.primer3Bases, primer3R2 = cfg.primer3Bases,
+        ncpu = int(cfg.numCores),
+        pr = cfg.tagNamePrimer, pe = cfg.tagNamePrimerErr, mi = cfg.tagNameUmiSeq,
+        log = cfg.readSet + '.prep.log')
+    subprocess.check_call(cmd, shell=True)
     
 #-------------------------------------------------------------------------------------
 def run(cfg):
@@ -115,6 +144,14 @@ def run(cfg):
     primerFile       = cfg.primerFile
     primer3Bases     = int(cfg.primer3Bases)
     platform = cfg.platform
+
+    # Use new read-trimmer for Illumina reads.
+    if cfg.platform.lower() == 'illumina':
+        runReadTrimmer(cfg)
+        return
+    
+    # The code below is now executed for IonTorrent Reads alone
+    # It is kept as-is from before, so there are references to illumina 
     
     # debug check
     if cfg.readFile1 == cfg.readFile2:

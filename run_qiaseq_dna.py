@@ -20,6 +20,9 @@ import metrics.sum_primer_umis
 import metrics.sum_all
 import metrics.umi_frags
 import metrics.umi_depths
+import metrics.duplex_summary
+import metrics.sum_primer_duplex
+import metrics.fraglen_by_rpu
 import misc.process_ion
 import misc.tvc
 import annotate.vcf_complex
@@ -49,10 +52,8 @@ def run(args,tumorNormal):
     else: # use tmap for ion torrent reads        
         misc.process_ion.alignToGenomeIon(cfg, readFileIn1, bamFileOut)
   
-    # call putative unique input molecules using BOTH UMI seq AND genome alignment position on random fragmentation side
-    
-    bamFileIn  = readSet + ".align.bam"
-     
+    # call putative unique input molecules using BOTH UMI seq AND genome alignment position on random fragmentation side    
+    bamFileIn  = readSet + ".align.bam"     
     core.umi_filter.run(cfg, bamFileIn)
     core.umi_mark.run(cfg)   
     metrics.umi_frags.run(cfg)
@@ -68,14 +69,18 @@ def run(args,tumorNormal):
     # additional metrics to generate
     metrics.sum_primer_umis.run(cfg) # primer-level umi and read metrics
     metrics.sum_specificity.run(cfg) # priming specificity
-    metrics.sum_uniformity_primer.run(cfg) # primer-level uniformity
+    metrics.sum_uniformity_primer.run(cfg) # primer-level uniformity    
+    if cfg.duplex.lower() == "true": # additional metrics for Duplex reads
+        metrics.duplex_summary.run(cfg)
+        metrics.sum_primer_duplex.run(cfg)
+        metrics.fraglen_by_rpu.run(cfg)
 
     # sort the final BAM file, to prepare for downstream variant calling
     bamFileIn  = readSet + ".primer_clip.bam"
     bamFileOut = readSet + ".bam"
     core.samtools.sort(cfg,bamFileIn,bamFileOut)   
-   
-    if cfg.duplex.lower() == "false": # do not run smCounter for duplex reads
+    
+    if not cfg.duplex.lower() == "true": # do not run smCounter for duplex reads
  
         if cfg.platform.lower() != "illumina": # ion reads
             misc.tvc.run(cfg)
@@ -89,10 +94,14 @@ def run(args,tumorNormal):
         # create complex variants, and annotate using snpEff
         if not tumorNormal:
             post_smcounter_work(numVariants, readSet, cfg, tumorNormal=False)
-            # close log file
-            core.run_log.close()
+    else:
+        # aggregate all metrics
+        metrics.sum_all.run(cfg)
 
- 
+    # close log file
+    core.run_log.close()
+       
+        
 def post_smcounter_work(numVariants, readSet, cfg, tumorNormal):
     ''' Additional Steps after smCounter
     :param int numVariants

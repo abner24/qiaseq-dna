@@ -16,15 +16,19 @@ NUM_UMIS_ALL_TT_1_READ_FRAG = 7
 NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH = 8
 NUM_UMIS_WITH_LT_2_CC_AND_TT_READ_FRAGS = 9
 
-NUM_UMIS_GTE_2_READ_FRAGS_CC_1_READ_FRAG_TT = 10
-NUM_UMIS_GTE_2_READ_FRAGS_TT_1_READ_FRAG_CC = 11
-NUM_UMIS_ATLEAST_3_CC_OR_TT_READ_FRAGS = 12
-NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS = 13
+NUM_UMIS_GTE_2_READ_FRAGS_CC_LTE_1_READ_FRAG_TT = 10
+NUM_UMIS_GTE_2_READ_FRAGS_TT_LTE_1_READ_FRAG_CC = 11
 
-DUPLEX_UMIS = 14
-DUPLEX_RATE = 15
+NUM_UMIS_GTE_2_READ_FRAGS_CC_0_READ_FRAG_TT = 12
+NUM_UMIS_GTE_2_READ_FRAGS_TT_0_READ_FRAG_CC = 13
 
-NUM_METRICS_TOTAL = 16
+NUM_UMIS_ATLEAST_3_CC_OR_TT_READ_FRAGS = 14
+NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS = 15
+
+DUPLEX_UMIS = 16
+DUPLEX_RATE = 17
+
+NUM_METRICS_TOTAL = 18
 
 def run(cfg):
     '''
@@ -99,24 +103,39 @@ def run(cfg):
         if duplex_by_umi[umi]['CC'] >= 4 or duplex_by_umi[umi]['TT'] >= 4:
             metric_vals[NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS] += 1
         
-        if duplex_by_umi[umi]['CC'] >= 6 or duplex_by_umi[umi]['TT'] >=6:
+        if duplex_by_umi[umi]['CC'] >= 6 or duplex_by_umi[umi]['TT'] >= 6:
             metric_vals[NUM_UMIS_ATLEAST_3_CC_OR_TT_READ_FRAGS] += 1
             
+        if duplex_by_umi[umi]['CC'] >= 4 and duplex_by_umi[umi]['TT'] >= 4:
+            metric_vals[DUPLEX_UMIS] += 1 # UMIs with CC >= 2 read frag and TT >= 2 read frag
+            
         num_CC = 0 if duplex_by_umi[umi]['CC'] < 4 else duplex_by_umi[umi]['CC'] # treat as if no CC if < 2 read frag support for duplex
-        num_TT = 0 if duplex_by_umi[umi]['TT'] < 4 else duplex_by_umi[umi]['TT'] # treat as if no TT if < 2 read frag support for duplex
+        num_TT = 0 if duplex_by_umi[umi]['TT'] < 4  else duplex_by_umi[umi]['TT'] # treat as if no TT if < 2 read frag support for duplex
         ratio_CC = float(num_CC)/float(num_CC + num_TT)
         if ratio_CC == 1.0:
-            metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_1_READ_FRAG_TT] += 1  # UMIs with TT = 1 read frag, CC >= 2 read frag
+            metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_LTE_1_READ_FRAG_TT] += 1  # UMIs with TT = 1 read frag, CC >= 2 read frag
         elif ratio_CC == 0.0:
-            metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_1_READ_FRAG_CC]  += 1  # UMIs with CC = 1 read frag, TT >= 2 read frag
-        else:
-            metric_vals[DUPLEX_UMIS] += 1 # UMIs with CC >= 2 read frag and TT >= 2 read frag
+            metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_LTE_1_READ_FRAG_CC]  += 1  # UMIs with CC = 1 read frag, TT >= 2 read frag
 
+        num_CC = 0 if duplex_by_umi[umi]['CC'] == 0 else duplex_by_umi[umi]['CC'] # no CC, but >=2 read frag
+        num_TT = 0 if duplex_by_umi[umi]['TT'] == 0 else duplex_by_umi[umi]['TT'] # no TT, but >=2 read frag
+        ratio_CC = float(num_CC)/float(num_CC + num_TT)
+        if ratio_CC == 1.0:
+            metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_0_READ_FRAG_TT] += 1  # UMIs with TT = 0 read frag, CC >= 2 read frag
+        elif ratio_CC == 0.0:
+            metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_0_READ_FRAG_CC]  += 1  # UMIs with CC = 0 read frag, TT >= 2 read frag
+
+
+    y = metric_vals[NUM_UMIS_ALL_CC_1_READ_FRAG] + \
+        metric_vals[NUM_UMIS_ALL_TT_1_READ_FRAG] + metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH] + \
+        metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_LTE_1_READ_FRAG_TT] + metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_LTE_1_READ_FRAG_CC] + \
+        metric_vals[DUPLEX_UMIS] + metric_vals[NUM_UMIS_NN_ONLY]
+    
     assert metric_vals[TOTAL_UMIS] == metric_vals[NUM_UMIS_ALL_CC_1_READ_FRAG] + \
         metric_vals[NUM_UMIS_ALL_TT_1_READ_FRAG] + metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH] + \
-        metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_1_READ_FRAG_TT] + metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_1_READ_FRAG_CC] + metric_vals[DUPLEX_UMIS] + \
-        metric_vals[NUM_UMIS_NN_ONLY], \
-        "Read accounting error !"
+        metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_LTE_1_READ_FRAG_TT] + metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_LTE_1_READ_FRAG_CC] + \
+        metric_vals[DUPLEX_UMIS] + metric_vals[NUM_UMIS_NN_ONLY], \
+        "Read accounting error ! {x} {y}".format(x = metric_vals[TOTAL_UMIS], y = y)
 
     assert metric_vals[TOTAL_UMIS] == metric_vals[NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS] + \
         metric_vals[NUM_UMIS_WITH_LT_2_CC_AND_TT_READ_FRAGS] + \
@@ -124,7 +143,7 @@ def run(cfg):
         "Read accounting error !"
 
     assert metric_vals[DUPLEX_UMIS] == metric_vals[NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS] - \
-        metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_1_READ_FRAG_TT] - metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_1_READ_FRAG_CC], \
+        metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_LTE_1_READ_FRAG_TT] - metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_LTE_1_READ_FRAG_CC], \
         "Read accounting error !"
     
     assert metric_vals[DUPLEX_UMIS] > 0, "Zero Duplex UMIs !"
@@ -139,25 +158,27 @@ def run(cfg):
     all_metrics = [
         (readset, "Read Set"),
         (str(metric_vals[TOTAL_UMIS]), "Total UMI Count"),
-        (str(metric_vals[NUM_UMIS_NN_ONLY]), "No. of NN only UMIs"),
-        (str(metric_vals[NUM_READS_NN]), "No. of NN reads excluded in analysis metrics"),        
+        (str(metric_vals[NUM_UMIS_NN_ONLY]), "No. of UMIs with only NN"),
+        (str(metric_vals[NUM_READS_NN]), "No. of NN reads excluded in analysis metrics"),
         (str(metric_vals[FRACTION_OF_UMIS_WITH_1_READ_FRAG]), "Fraction of UMIs with 1 read frag "),
         (str(metric_vals[FRACTION_OF_UMIS_WITH_2_READ_FRAGS]), "Fraction of UMIs with 2 read frag"),
         (str(metric_vals[FRACTION_OF_UMIS_WITH_3_READ_FRAGS]), "Fraction of UMIs with 3 read frag"),
-        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_1_READ_FRAG_TT]), "No. of UMIs with >= 2 read frags CC AND 1 read frag TT"),
-        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_1_READ_FRAG_CC]), "No. of UMIs with >= 2 read frags TT AND 1 read frag CC"),        
+        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_0_READ_FRAG_TT]), "No. of UMIs with >= 2 read frags CC AND 0 read frag TT"),
+        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_0_READ_FRAG_CC]), "No. of UMIs with >= 2 read frags TT AND 0 read frag CC"),
+        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_LTE_1_READ_FRAG_TT]), "No. of UMIs with >= 2 read frags CC AND <= 1 read frag TT"),
+        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_LTE_1_READ_FRAG_CC]), "No. of UMIs with >= 2 read frags TT AND <= 1 read frag CC"),
         (str(metric_vals[NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS]), "No. of UMIs with >= 2 read frags CC OR TT"),
         (str(metric_vals[NUM_UMIS_ATLEAST_3_CC_OR_TT_READ_FRAGS]), "No. of UMIs with >= 3 read frags CC OR TT"),
-        (str(metric_vals[NUM_UMIS_WITH_LT_2_CC_AND_TT_READ_FRAGS]), "No. of UMIs with < 2 CC AND TT read frags"),
-        (str(metric_vals[DUPLEX_UMIS]), "No. of Duplex UMIs (>= 2 read frags each CC and TT)"),
+        (str(metric_vals[NUM_UMIS_WITH_LT_2_CC_AND_TT_READ_FRAGS]), "No. of UMIs with < 2 read frags CC AND TT"),
+        (str(metric_vals[DUPLEX_UMIS]), "No. of Duplex UMIs (>= 2 read frags CC AND TT)"),
         (str(metric_vals[DUPLEX_RATE]), "Duplex Rate (Duplex UMIs/Total UMI)"),
-        (str(metric_vals[NUM_UMIS_ALL_TT_1_READ_FRAG]), "No. of UMIs with all CC tags (1 read frag UMIs)"),
-        (str(metric_vals[NUM_UMIS_ALL_CC_1_READ_FRAG]),"No. of UMIs with all TT tags (1 read frag UMIs)"),
-        (str(metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH]),"No. of UMIs with both CC and TT tags (1 read frag each CC and TT)")
+        (str(metric_vals[NUM_UMIS_ALL_TT_1_READ_FRAG]), "No. of UMIs with all CC (1 read frag UMIs)"),
+        (str(metric_vals[NUM_UMIS_ALL_CC_1_READ_FRAG]), "No. of UMIs with all TT (1 read frag UMIs)"),
+        (str(metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH]),"No. of UMIs with both CC and TT (1 read frag CC AND TT)")
     ]    
     summary_metrics = [
-        (str(metric_vals[NUM_UMIS_NN_ONLY]), "No. of NN only UMIs"),        
-        (str(metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH]),"No. of UMIs with both CC and TT tags (1 read frag each CC and TT)"),
+        (str(metric_vals[NUM_UMIS_NN_ONLY]), "No. of NN only UMIs"),
+        (str(metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH]),"No. of UMIs with both CC and TT (1 read frag each CC and TT)"),
         (str(metric_vals[DUPLEX_UMIS]), "No. of Duplex UMIs (>= 2 read frags each CC and TT)"),
         (str(metric_vals[DUPLEX_RATE]), "Duplex Rate (Duplex UMIs/Total UMI)"),
     ]
@@ -171,9 +192,6 @@ def run(cfg):
     with open(out_detail_file, 'w') as OUT:
         header = "\t".join([element[1] for element in all_metrics])
         OUT.write(header)
-        OUT.write("\n")
-        values = "\t".join([element[0] for element in all_metrics])
-        OUT.write(values)
         OUT.write("\n")
         
     IN.close()

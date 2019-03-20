@@ -62,6 +62,7 @@ def run(cfg):
 
     with open(outfile, "w") as OUT:
         OUT.write(out_header)
+        OUT.write("\n")
         for i,arr in enumerate([umis_with_1_readfrag,umis_with_2_readfrag,umis_with_3_readfrag]):
             percentile_25 = np.percentile(arr,25)
             percentile_50 = np.percentile(arr,50)

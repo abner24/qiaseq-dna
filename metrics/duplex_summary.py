@@ -193,7 +193,10 @@ def run(cfg):
         header = "\t".join([element[1] for element in all_metrics])
         OUT.write(header)
         OUT.write("\n")
-        
+        row = "\t".join([element[0] for element in all_metrics])
+        OUT.write(row)
+        OUT.write("\n")
+
     IN.close()
 
 

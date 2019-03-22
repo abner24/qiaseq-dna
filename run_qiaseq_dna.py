@@ -70,7 +70,7 @@ def run(args,tumorNormal):
     metrics.sum_primer_umis.run(cfg) # primer-level umi and read metrics
     metrics.sum_specificity.run(cfg) # priming specificity
     metrics.sum_uniformity_primer.run(cfg) # primer-level uniformity    
-    if cfg.duplex.lower() == "true": # additional metrics for Duplex reads
+    if cfg.duplex: # additional metrics for Duplex reads
         metrics.duplex_summary.run(cfg)
         metrics.sum_primer_duplex.run(cfg)
         metrics.fraglen_by_rpu.run(cfg)
@@ -80,7 +80,7 @@ def run(args,tumorNormal):
     bamFileOut = readSet + ".bam"
     core.samtools.sort(cfg,bamFileIn,bamFileOut)   
     
-    if not cfg.duplex.lower() == "true": # do not run smCounter for duplex reads
+    if not cfg.duplex: # do not run smCounter for duplex reads
  
         if cfg.platform.lower() != "illumina": # ion reads
             misc.tvc.run(cfg)

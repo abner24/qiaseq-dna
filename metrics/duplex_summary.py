@@ -8,9 +8,9 @@ import pysam
 TOTAL_UMIS = 0
 NUM_UMIS_NN_ONLY  = 1
 NUM_READS_NN = 2
-FRACTION_OF_UMIS_WITH_1_READ_FRAG = 3
-FRACTION_OF_UMIS_WITH_2_READ_FRAGS = 4
-FRACTION_OF_UMIS_WITH_3_READ_FRAGS = 5
+PERC_OF_UMIS_WITH_1_READ_FRAG = 3
+PERC_OF_UMIS_WITH_2_READ_FRAGS = 4
+PERC_OF_UMIS_WITH_3_READ_FRAGS = 5
 NUM_UMIS_ALL_CC_1_READ_FRAG = 6
 NUM_UMIS_ALL_TT_1_READ_FRAG = 7
 NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH = 8
@@ -39,7 +39,7 @@ def run(cfg):
     inbam   = cfg.readSet + '.umi_merge.bam'
    
     out_summary_file = readset + '.duplex.summary.txt'
-    out_detail_file  = readset + '.duplex.summary.detail.txt'
+    out_detail_file  = readset + '.duplex.detail.summary.txt'
     
     metric_vals = [0]*NUM_METRICS_TOTAL
 
@@ -125,17 +125,12 @@ def run(cfg):
         elif ratio_CC == 0.0:
             metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_0_READ_FRAG_CC]  += 1  # UMIs with CC = 0 read frag, TT >= 2 read frag
 
-
-    y = metric_vals[NUM_UMIS_ALL_CC_1_READ_FRAG] + \
-        metric_vals[NUM_UMIS_ALL_TT_1_READ_FRAG] + metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH] + \
-        metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_LTE_1_READ_FRAG_TT] + metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_LTE_1_READ_FRAG_CC] + \
-        metric_vals[DUPLEX_UMIS] + metric_vals[NUM_UMIS_NN_ONLY]
-    
+   
     assert metric_vals[TOTAL_UMIS] == metric_vals[NUM_UMIS_ALL_CC_1_READ_FRAG] + \
         metric_vals[NUM_UMIS_ALL_TT_1_READ_FRAG] + metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH] + \
         metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_LTE_1_READ_FRAG_TT] + metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_LTE_1_READ_FRAG_CC] + \
         metric_vals[DUPLEX_UMIS] + metric_vals[NUM_UMIS_NN_ONLY], \
-        "Read accounting error ! {x} {y}".format(x = metric_vals[TOTAL_UMIS], y = y)
+        "Read accounting error !"
 
     assert metric_vals[TOTAL_UMIS] == metric_vals[NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS] + \
         metric_vals[NUM_UMIS_WITH_LT_2_CC_AND_TT_READ_FRAGS] + \
@@ -151,38 +146,35 @@ def run(cfg):
 
     metric_vals[DUPLEX_RATE] =  round(float(metric_vals[DUPLEX_UMIS]) / metric_vals[TOTAL_UMIS],2)
     # round some other values before printing
-    metric_vals[FRACTION_OF_UMIS_WITH_1_READ_FRAG] = round(float(umis_with_1_readfrag)/metric_vals[TOTAL_UMIS],2)
-    metric_vals[FRACTION_OF_UMIS_WITH_2_READ_FRAGS] = round(float(umis_with_2_readfrag)/metric_vals[TOTAL_UMIS],2)
-    metric_vals[FRACTION_OF_UMIS_WITH_3_READ_FRAGS] = round(float(umis_with_3_readfrag)/metric_vals[TOTAL_UMIS],2)
+    metric_vals[PERC_OF_UMIS_WITH_1_READ_FRAG] = round(float(umis_with_1_readfrag)/metric_vals[TOTAL_UMIS],2)*100
+    metric_vals[PERC_OF_UMIS_WITH_2_READ_FRAGS] = round(float(umis_with_2_readfrag)/metric_vals[TOTAL_UMIS],2)*100
+    metric_vals[PERC_OF_UMIS_WITH_3_READ_FRAGS] = round(float(umis_with_3_readfrag)/metric_vals[TOTAL_UMIS],2)*100
 
     all_metrics = [
-        (readset, "Read Set"),
-        (str(metric_vals[TOTAL_UMIS]), "Total UMI Count"),
-        (str(metric_vals[NUM_UMIS_NN_ONLY]), "No. of UMIs with only NN"),
-        (str(metric_vals[NUM_READS_NN]), "No. of NN reads excluded in analysis metrics"),
-        (str(metric_vals[FRACTION_OF_UMIS_WITH_1_READ_FRAG]), "Fraction of UMIs with 1 read frag "),
-        (str(metric_vals[FRACTION_OF_UMIS_WITH_2_READ_FRAGS]), "Fraction of UMIs with 2 read frag"),
-        (str(metric_vals[FRACTION_OF_UMIS_WITH_3_READ_FRAGS]), "Fraction of UMIs with 3 read frag"),
-        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_0_READ_FRAG_TT]), "No. of UMIs with >= 2 read frags CC AND 0 read frag TT"),
-        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_0_READ_FRAG_CC]), "No. of UMIs with >= 2 read frags TT AND 0 read frag CC"),
-        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_LTE_1_READ_FRAG_TT]), "No. of UMIs with >= 2 read frags CC AND <= 1 read frag TT"),
-        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_LTE_1_READ_FRAG_CC]), "No. of UMIs with >= 2 read frags TT AND <= 1 read frag CC"),
-        (str(metric_vals[NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS]), "No. of UMIs with >= 2 read frags CC OR TT"),
-        (str(metric_vals[NUM_UMIS_ATLEAST_3_CC_OR_TT_READ_FRAGS]), "No. of UMIs with >= 3 read frags CC OR TT"),
-        (str(metric_vals[NUM_UMIS_WITH_LT_2_CC_AND_TT_READ_FRAGS]), "No. of UMIs with < 2 read frags CC AND TT"),
-        (str(metric_vals[DUPLEX_UMIS]), "No. of Duplex UMIs (>= 2 read frags CC AND TT)"),
+        (str(metric_vals[NUM_UMIS_NN_ONLY]), "UMIs with only NN"),
+        (str(metric_vals[NUM_READS_NN]), "read fragments with NN excluded in analysis metrics"),
+        (str(metric_vals[PERC_OF_UMIS_WITH_1_READ_FRAG]), "% of UMIs with 1 read frag "),
+        (str(metric_vals[PERC_OF_UMIS_WITH_2_READ_FRAGS]), "% of UMIs with 2 read frag"),
+        (str(metric_vals[PERC_OF_UMIS_WITH_3_READ_FRAGS]), "% of UMIs with 3 read frag"),
+        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_0_READ_FRAG_TT]), "UMIs with >= 2 read frags CC and 0 read frag TT"),
+        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_0_READ_FRAG_CC]), "UMIs with >= 2 read frags TT and 0 read frag CC"),
+        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_CC_LTE_1_READ_FRAG_TT]), "UMIs with >= 2 read frags CC and <= 1 read frag TT"),
+        (str(metric_vals[NUM_UMIS_GTE_2_READ_FRAGS_TT_LTE_1_READ_FRAG_CC]), "UMIs with >= 2 read frags TT and <= 1 read frag CC"),
+        (str(metric_vals[NUM_UMIS_ATLEAST_3_CC_OR_TT_READ_FRAGS]), "UMIs with >= 3 read frags CC OR TT"),
+        (str(metric_vals[NUM_UMIS_WITH_LT_2_CC_AND_TT_READ_FRAGS]), "UMIs with < 2 read frags CC AND TT"),
+        (str(metric_vals[DUPLEX_UMIS]), "usable Duplex UMIs (>= 2 read frags CC and TT)"),
+        (str(metric_vals[NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS]), "usable UMIs (>= 2 read frags CC or TT)"),        
         (str(metric_vals[DUPLEX_RATE]), "Duplex Rate (Duplex UMIs/Total UMI)"),
-        (str(metric_vals[NUM_UMIS_ALL_TT_1_READ_FRAG]), "No. of UMIs with all CC (1 read frag UMIs)"),
-        (str(metric_vals[NUM_UMIS_ALL_CC_1_READ_FRAG]), "No. of UMIs with all TT (1 read frag UMIs)"),
-        (str(metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH]),"No. of UMIs with both CC and TT (1 read frag CC AND TT)")
+        (str(metric_vals[NUM_UMIS_ALL_TT_1_READ_FRAG]), "UMIs with all CC (1 read frag UMIs)"),
+        (str(metric_vals[NUM_UMIS_ALL_CC_1_READ_FRAG]), "UMIs with all TT (1 read frag UMIs)"),
+        (str(metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH]),"UMIs with both CC and TT (1 read frag CC and TT)")
     ]    
     summary_metrics = [
-        (str(metric_vals[NUM_UMIS_NN_ONLY]), "No. of NN only UMIs"),
-        (str(metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH]),"No. of UMIs with both CC and TT (1 read frag each CC and TT)"),
-        (str(metric_vals[DUPLEX_UMIS]), "No. of Duplex UMIs (>= 2 read frags each CC and TT)"),
-        (str(metric_vals[DUPLEX_RATE]), "Duplex Rate (Duplex UMIs/Total UMI)"),
+        (str(metric_vals[DUPLEX_UMIS]), "usable Duplex UMIs (>= 2 read frags CC and TT)"),
+        (str(metric_vals[NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS]), "usable UMIs (>= 2 read frags CC or TT)"),
+        (str(metric_vals[DUPLEX_RATE]), "Duplex Rate (Duplex UMIs/UMIs)"),
     ]
-    assert len(all_metrics) == NUM_METRICS_TOTAL + 1 # read set is added
+    assert len(all_metrics) == NUM_METRICS_TOTAL - 1 # no total UMIs in metric output
 
     with open(out_summary_file, 'w') as OUT:
         for element in summary_metrics:
@@ -190,12 +182,10 @@ def run(cfg):
             OUT.write("\n")
             
     with open(out_detail_file, 'w') as OUT:
-        header = "\t".join([element[1] for element in all_metrics])
-        OUT.write(header)
-        OUT.write("\n")
-        row = "\t".join([element[0] for element in all_metrics])
-        OUT.write(row)
-        OUT.write("\n")
+        for e in all_metrics:
+            row = "\t".join(e)
+            OUT.write(row)
+            OUT.write("\n")
 
     IN.close()
 

@@ -3,10 +3,19 @@ import os
 def run(cfg):
     # get read set name
     readSet = cfg.readSet
+    
+    umi_filter = "umi_filter"
+    duplex     = "duplex"
+    prep       = "prep"
+    if cfg.outputDetail:
+        prep       = "prep.detail"
+        umi_filter = "umi_filter.detail"
+        duplex     = "duplex.detail"
 
+        
     # concatenate summary files
     with open(readSet + ".sum_all.summary.txt", "w") as OUT:
-        for fileType in ("prep", "align", "umi_filter", "umi_frags", "sum.uniformity.primer", "umi_depths", "duplex", "smCounter", "vcf_complex"):
+        for fileType in ("prep", "align", umi_filter, "umi_frags", "sum.uniformity.primer", "umi_depths", duplex, "smCounter", "vcf_complex"):
             '''
             prep, align           -->  trimming metrics                 : core/prep.py, misc/process_ion.py (for ion reads)
             umi_filter            -->  primer finding metrics           : core/umi_filter.py

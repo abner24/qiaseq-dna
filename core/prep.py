@@ -108,15 +108,17 @@ def runReadTrimmer(cfg):
           "--seqtype dna --umi-len 12 --common-seq-len 11 " \
           "--min-primer-side-len 25 --min-umi-side-len 1 --tagname-primer {pr} " \
           "--tagname-primer-error {pe} --tagname-umi {mi} "
-    if cfg.duplex.lower() == "true":
+    if cfg.duplex:
         cmd = cmd + "--tagname-duplex {du} --is-duplex --is-phased-adapters ".format(du = cfg.tagNameDuplex)
+    if cfg.multimodal:
+        cmd = cmd + "--is-multimodal "
     cmd = cmd + "> {log} 2>&1"
     
     cmd = cmd.format(
         trimmer = os.path.join(os.path.dirname(os.path.dirname(
             os.path.abspath(__file__))),'read-trimmer/trimmer/run.py'),
         R1 = cfg.readFile1, R2 = cfg.readFile2, primer = cfg.primerFile,
-        summary = cfg.readSet + '.prep.summary.txt',
+        summary = cfg.readSet + '.prep.detail.summary.txt',
         outR1 = cfg.readSet + '.prep.R1.fastq',
         outR2 = cfg.readSet + '.prep.R2.fastq',
         primer3R1 = cfg.primer3Bases, primer3R2 = cfg.primer3Bases,
@@ -124,6 +126,19 @@ def runReadTrimmer(cfg):
         pr = cfg.tagNamePrimer, pe = cfg.tagNamePrimerErr, mi = cfg.tagNameUmiSeq,
         log = cfg.readSet + '.prep.log')
     subprocess.check_call(cmd, shell=True)
+
+    # create a less dense summary file
+    minimal_metrics = [
+        lambda x: x == "read fragments total", lambda x: x.startswith("read fragments dropped,"),
+        lambda x: x.startswith("read fragments with duplex tag"), lambda x: x.startswith("read fragments after trimming")]
+    
+    with open(cfg.readSet + '.prep.detail.summary.txt','r') as IN, \
+         open(cfg.readSet + '.prep.summary.txt','w') as OUT:
+        for line in IN:
+            val, metricname = line.strip('\n').split('\t')
+            for comparison in minimal_metrics:
+                if comparison(metricname):
+                    OUT.write(line)
     
 #-------------------------------------------------------------------------------------
 def run(cfg):

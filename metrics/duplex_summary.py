@@ -165,8 +165,8 @@ def run(cfg):
         (str(metric_vals[DUPLEX_UMIS]), "usable Duplex UMIs (>= 2 read frags CC and TT)"),
         (str(metric_vals[NUM_UMIS_ATLEAST_2_CC_OR_TT_READ_FRAGS]), "usable UMIs (>= 2 read frags CC or TT)"),        
         (str(metric_vals[DUPLEX_RATE]), "Duplex Rate (Duplex UMIs/Total UMI)"),
-        (str(metric_vals[NUM_UMIS_ALL_TT_1_READ_FRAG]), "UMIs with all CC (1 read frag UMIs)"),
-        (str(metric_vals[NUM_UMIS_ALL_CC_1_READ_FRAG]), "UMIs with all TT (1 read frag UMIs)"),
+        (str(metric_vals[NUM_UMIS_ALL_TT_1_READ_FRAG]), "UMIs with all TT (1 read frag UMIs)"),
+        (str(metric_vals[NUM_UMIS_ALL_CC_1_READ_FRAG]), "UMIs with all CC (1 read frag UMIs)"),
         (str(metric_vals[NUM_UMIS_BOTH_CC_AND_TT_1_READ_FRAG_EACH]),"UMIs with both CC and TT (1 read frag CC and TT)")
     ]    
     summary_metrics = [

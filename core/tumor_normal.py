@@ -13,7 +13,6 @@ import sys
 import warnings
 
 # our modules
-sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 smcounter_v2 = __import__("qiaseq-smcounter-v2.vcf")
 
 # some constants, learned from existing datasets

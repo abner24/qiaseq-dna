@@ -3,7 +3,6 @@ import os
 import sys
 
 # our modules
-sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 sm_counter_v1 = __import__("qiaseq-smcounter-v1.sm_counter")
 sm_counter_v2 = __import__("qiaseq-smcounter-v2.run")
 

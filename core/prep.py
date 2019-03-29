@@ -41,7 +41,12 @@ def runReadTrimmer(cfg):
         ncpu = int(cfg.numCores),
         pr = cfg.tagNamePrimer, pe = cfg.tagNamePrimerErr, mi = cfg.tagNameUmiSeq,
         log = cfg.readSet + '.prep.log')
-    subprocess.check_call(cmd, shell=True)
+    p = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    print(stdout) # capture logs in the main logfile for upstream error trapping modules
+    print(stderr)
+    if p.returncode:
+        raise Exception("Trimming of Fastqs failed !")
 
     # create a less dense summary file
     minimal_metrics = [

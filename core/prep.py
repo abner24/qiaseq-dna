@@ -29,7 +29,6 @@ def runReadTrimmer(cfg):
         cmd = cmd + "--tagname-duplex {du} --is-duplex --is-phased-adapters ".format(du = cfg.tagNameDuplex)
     if cfg.multimodal:
         cmd = cmd + "--is-multimodal "
-    cmd = cmd + "> {log} 2>&1"
     
     cmd = cmd.format(
         trimmer = readTrimmerPath,
@@ -41,7 +40,7 @@ def runReadTrimmer(cfg):
         ncpu = int(cfg.numCores),
         pr = cfg.tagNamePrimer, pe = cfg.tagNamePrimerErr, mi = cfg.tagNameUmiSeq,
         log = cfg.readSet + '.prep.log')
-    p = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    p = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
     stdout, stderr = p.communicate()
     print(stdout) # capture logs in the main logfile for upstream error trapping modules
     print(stderr)

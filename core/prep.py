@@ -6,7 +6,7 @@ import math
 import subprocess
 
 # our modules
-import misc
+import misc.prep_ion
 
 #-------------------------------------------------------------------------------------
 def runReadTrimmer(cfg):

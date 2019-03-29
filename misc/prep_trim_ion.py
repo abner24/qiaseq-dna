@@ -144,7 +144,7 @@ def run(cutadaptDir,tagNameUmiSeq,tagNamePrimer,tagNamePrimerErr,primer3Bases,fi
     print "Trimming Primers\n"
     fileOut1 = filePrefix + ".trimmed.R1.fastq"
     fileOut2 = filePrefix + ".trimmed.R2.fastq"
-    primer_trim.main(
+    primer_trim_ion.main(
         fileIn2,fileIn1,fileOut2,fileOut1,primerFile,primerFile+'.clusters',
         int(primer3Bases),tagNamePrimer,tagNamePrimerErr,update_read_id=False,
         out_tag_file=filePrefix+".primer.tag.txt",load_cache=False,cache_file=None) # swapped R1 and R2

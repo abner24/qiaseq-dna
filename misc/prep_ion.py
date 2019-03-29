@@ -111,10 +111,17 @@ def run(cfg):
     primerFile       = cfg.primerFile
     primer3Bases     = int(cfg.primer3Bases)
     platform = cfg.platform
-    
+
+    seqtype = "iontorrent"
+    assert platform.lower() != "illumina", "This module only supports IonTorrent Reads !"
     # set output file prefix
     filePrefixOut = readSet + ".prep"    
-  
+
+    numReads1, numBatches = splitReadFile(readFile1,filePrefixOut,"R1",numCores,deleteLocalFiles)
+    # debug check
+    if numReads1 == 0:
+        raise UserWarning("prep: input read files are empty!")
+                                                                
     # run cd-hit to cluster close primer sequences; creates the file {primerFile}.clusters
     primer_trim_ion.cluster_primer_seqs(primerFile)
     

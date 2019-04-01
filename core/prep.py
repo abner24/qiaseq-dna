@@ -42,24 +42,44 @@ def runReadTrimmer(cfg):
         log = cfg.readSet + '.prep.log')
     p = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
     stdout, stderr = p.communicate()
-    print(stdout) # capture logs in the main logfile for upstream error trapping modules
+    print(stdout) # redirect stderr and stdout to main logfile so upstream error trapping modules can find UserWarning exception
     print(stderr)
     if p.returncode:
         raise Exception("Trimming of Fastqs failed !")
 
-    # create a less dense summary file
+    # create a less dense summary file for customers
     minimal_metrics = [
-        lambda x: x == "read fragments total", lambda x: x.startswith("read fragments dropped,"),
-        lambda x: x.startswith("read fragments with duplex tag"), lambda x: x.startswith("read fragments after trimming")]
+        lambda x: x == "read fragments total", lambda x: x == "read fragments dropped, no duplex adapter",
+        lambda x: x.startswith("read fragments with duplex tag")]
     
+    generic_reads_dropped_label = "read fragments dropped, less than 40 bp"
+    
+    out = {}
+    dropped = 0
     with open(cfg.readSet + '.prep.detail.summary.txt','r') as IN, \
          open(cfg.readSet + '.prep.summary.txt','w') as OUT:
+
         for line in IN:
+
             val, metricname = line.strip('\n').split('\t')
+            minimal = False
             for comparison in minimal_metrics:
                 if comparison(metricname):
-                    OUT.write(line)
+                    out[metricname] = line
+                    minimal = True
+
+            if not minimal: # sum up some 'reads fragments dropped,' metrics to 1 generic bucket
+                if metricname.startswith("read fragments dropped,"):
+                    dropped += int(val)
     
+        OUT.write(out["read fragments total"])
+        OUT.write("{val}\t{metric}\n".format(val = dropped, metric = generic_reads_dropped_label))
+        if cfg.duplex:
+            OUT.write(out["read fragments dropped, no duplex adapter"])
+            for o in out:
+                if minimal_metrics[2](o): # duplex tag CC,TT,NN
+                    OUT.write(out[o])
+
 #-------------------------------------------------------------------------------------
 def run(cfg):
     # report start

@@ -93,10 +93,8 @@ def run(args,tumorNormal):
     # create complex variants, and annotate using snpEff
     if not tumorNormal:
         post_smcounter_work(numVariants, readSet, cfg, tumorNormal=False)
-
-    # close log file
-    core.run_log.close()
-       
+        # close log file
+        core.run_log.close()
         
 def post_smcounter_work(numVariants, readSet, cfg, tumorNormal):
     ''' Additional Steps after smCounter

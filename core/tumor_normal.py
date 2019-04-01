@@ -401,9 +401,9 @@ def tumorNormalVarFilter(cfg):
 
     # re-run smCounter vcf creation module
     smcounter_v2.vcf.makeVcf(
-        './', tempFile1, readSetTumor, cfg.genomeFile, tumorNormal = True)
+        './', tempFile1, readSetTumor, cfg.genomeFile, isDuplex = False, tumorNormal = True)
     smcounter_v2.vcf.makeVcf(
-        './', tempFile2, readSetNormal, cfg.genomeFile, tumorNormal = True)
+        './', tempFile2, readSetNormal, cfg.genomeFile, isDuplex = False, tumorNormal = True)
 
 
 def runCopyNumberEstimates(cfg):

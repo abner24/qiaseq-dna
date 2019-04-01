@@ -74,16 +74,6 @@ RUN wget https://github.com/samtools/samtools/releases/download/1.5/samtools-1.5
     make install && \
     rm /srv/qgen/bin/downloads/samtools-1.5.tar.bz2
 
-## Download annotation using SnpEff command
-RUN wget http://downloads.sourceforge.net/project/snpeff/databases/v4_2/snpEff_v4_2_GRCh37.75.zip -P /opt/conda/share/snpeff-4.2-0/
-RUN rm -rf /opt/conda/share/snpeff-4.2-0/data/
-RUN cd /opt/conda/share/snpeff-4.2-0/ && \
-    unzip snpEff_v4_2_GRCh37.75.zip && \
-    rm snpEff_v4_2_GRCh37.75.zip
-
-## The command below is not working anymore because of some certificate issue (debug later)
-#RUN /opt/conda/jre/bin/java -jar /opt/conda/share/snpeff-4.2-0/snpEff.jar download GRCh37.75
-
 ################ Modules for CNV Analysis ################
 ## Perl
 RUN cpan DateTime
@@ -107,6 +97,10 @@ RUN wget https://storage.googleapis.com/qiaseq-dna/lib/TorrentSuite/tmap \
     https://storage.googleapis.com/qiaseq-dna/lib/TorrentSuite/tvc \
     -P /srv/qgen/bin/TorrentSuite/ && \
     chmod 775 /srv/qgen/bin/TorrentSuite/tmap /srv/qgen/bin/TorrentSuite/tvc
+## vcflib
+RUN cd /srv/qgen/bin/downloads && git clone --recursive https://github.com/vcflib/vcflib.git && \
+    cd vcflib && make && mkdir -p /srv/qgen/bin/vcflib/bin/ && cp bin/* /srv/qgen/bin/vcflib/bin/ && \
+    cd / && rm -rf /srv/qgen/downloads/vcflib/
 
 ################ Update Environment Variables ################
 ENV PYTHONPATH $PYTHONPATH:/opt/conda/lib/python2.7/site-packages/:/srv/qgen/code/qiaseq-dna/
